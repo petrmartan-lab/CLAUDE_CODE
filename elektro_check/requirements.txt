@@ -1,0 +1,11 @@
+# Python knihovny
+ezdxf>=1.4
+pandas
+openpyxl
+rapidfuzz
+
+# pouze pro OCR fallback (checker.py)
+pdfplumber
+pytesseract
+pdf2image
+Pillow
