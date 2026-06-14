@@ -53,6 +53,34 @@ Na úrovni projektu (napříč listy):
 - konzistence zařízení napříč listy (typ, krytí)
 - **napojení** — ODKUD/KAM kabelu musí odkazovat na existující zařízení
 
+## Detekce zrušených prvků (rušící křížky ✕)
+
+Revizní křížky `✕` (dvě křížící se čáry) = **zrušení**. Konektory se kreslí jako
+obloučky, nikdy jako křížky — proto se nepletou. Podle toho, **přes co křížek leží**:
+
+| Křížek leží přes… | Význam |
+|---|---|
+| název `HUBxxx` / zařízení | **zrušený HUB / zařízení** |
+| čáru spoje nebo port (X1/X2) | **zrušený spoj** |
+
+Detekce je v `cancellations.py`, výsledek je v exportu na listu **`Ruseni`**
+(`typ`, `zarizeni_nebo_cil`, `kabel`, `x`, `y`) a souhrnně v `Prehled`
+(sloupce `ruseno_zarizeni`, `ruseno_spoju`).
+
+U zrušeného spoje se navíc dopočítává **kterého kabelu se týká** a jaký byl
+**starý cíl** (zařízení/port). Příklad z listu 16: `OR5-WF-1003 → HUB6_PORT4`
+(spoj zrušen, kabel přesměrován jinam).
+
+Vizuální ověření libovolného listu (🔴 zařízení, 🟠 spoj):
+```
+py render_cancel.py "cesta\k\vykresu.dwg"
+```
+
+**Jak se kabel přiřazuje:** trasovat po drátech NELZE — zrušený drát je z výkresu
+smazaný (zůstane jen ✕). Proto se kabel určuje podle **sloupce** (kabel leží pod svým
+spojem ve stejném `x`). Je to spolehlivý odhad, ne 100 % jistota — u nejasných případů
+doporučen spot-check přes `render_cancel.py`.
+
 ## Mapování dat (zjištěno z DWG)
 
 | Prvek | Vrstva | Blok | Klíčové atributy |

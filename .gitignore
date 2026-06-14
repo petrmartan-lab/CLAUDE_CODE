@@ -2,5 +2,13 @@
 __pycache__/
 *.pyc
 
-# Reporty generované checkerem
+# Reporty a exporty generované nástrojem
 report*.xlsx
+export_full.xlsx
+export_csv/
+
+# Generované renderry (PNG z render skriptů)
+*_KRIZKY.png
+*_CANCEL.png
+*_DEMO.png
+*_ZOOM.png

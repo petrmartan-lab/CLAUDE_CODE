@@ -15,6 +15,11 @@ import pandas as pd
 
 import checks
 
+try:                                   # konzole muze byt cp1250 -> nespadni na diakritice
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 ODA_EXE = r"C:\Program Files\ODA\ODAFileConverter 27.1.0\ODAFileConverter.exe"
 ezdxf.options.set("odafc-addon", "win_exec_path", ODA_EXE)
 
