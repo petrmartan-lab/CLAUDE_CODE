@@ -72,6 +72,24 @@ def text_under(c, texts):
     return best
 
 
+def reserve_cables(msp):
+    """Kabely oznacene textem 'KABEL V REZERVE' = kabel v rezerve (vsechny spoje zrusene).
+    Vraci mnozinu oznaceni kabelu."""
+    texts = all_texts(msp)
+    res_pts = [(x, y) for t, x, y, h in texts if "REZERV" in t.upper()]
+    cabs = cable_positions(msp)
+    flagged = set()
+    for rx, ry in res_pts:
+        best, bd = None, 20.0
+        for tag, cx, cy in cabs:
+            d = math.hypot(rx - cx, ry - cy)
+            if d < bd:
+                bd, best = d, tag
+        if best:
+            flagged.add(best)
+    return flagged
+
+
 def associate_cable(c, cabs, col_tol=16.0):
     """Kabel ve stejnem sloupci (|dx|<col_tol), nejblizsi -> zruseny spoj patri jemu.
     (Trasovat po dratech nelze - zruseny drat je z vykresu smazany.)"""

@@ -95,6 +95,7 @@ def run(folder):
     all_rows = []
     overview = []
     cancel_rows = []
+    reserve_map = {}            # (vykres, kabel) -> True pokud "KABEL V REZERVE"
 
     for i, dwg in enumerate(dwgs, 1):
         print("[{:>2}/{}] {} ...".format(i, len(dwgs), dwg.name), end=" ", flush=True)
@@ -107,14 +108,20 @@ def run(folder):
         rows = extract_blocks(doc, dwg.name, list_no)
         all_rows.extend(rows)
 
+        msp = doc.modelspace()
         # rusici krizky (X = zruseni)
-        cancels = cancellations.detect(doc.modelspace())
+        cancels = cancellations.detect(msp)
         cancel_devs = sorted({c["prvek"] for c in cancels if c["typ"].startswith("zruseny HUB")})
         n_spoj = sum(1 for c in cancels if c["typ"] == "zruseny spoj")
         for c in cancels:
             cancel_rows.append({"vykres": dwg.name, "list": list_no,
                                 "typ": c["typ"], "zarizeni_nebo_cil": c["prvek"],
                                 "kabel": c.get("kabel", "-"), "x": c["x"], "y": c["y"]})
+
+        # kabely v rezerve (vsechny spoje zrusene) - oznacene textem v vykresu
+        reserve = cancellations.reserve_cables(msp)
+        for tag in reserve:
+            reserve_map[(dwg.name, tag)] = True
 
         layer_counts = Counter(r["vrstva"] for r in rows)
         overview.append({
@@ -126,6 +133,7 @@ def run(folder):
             "ostatni": len(rows) - layer_counts.get("CABL", 0) - layer_counts.get("SILS", 0),
             "ruseno_zarizeni": len(cancel_devs),
             "ruseno_spoju": n_spoj,
+            "kabelu_rezerva": len(reserve),
         })
         print("prvku: {}  ruseni: {} zar / {} spoj".format(len(rows), len(cancel_devs), n_spoj))
 
@@ -140,6 +148,10 @@ def run(folder):
     df_conn = df_cab[[c for c in ["vykres", "list", "VYPSANE_OZNACENI", "ODKUD", "KAM", "TYP"]
                       if c in df_cab.columns]].copy()
     df_conn.columns = ["vykres", "list", "kabel", "odkud_FROM", "kam_TO", "typ"][:len(df_conn.columns)]
+    # priznak rezervy (kabel v rezerve = vsechny spoje zrusene)
+    if "vykres" in df_conn.columns and "kabel" in df_conn.columns:
+        df_conn["rezerva"] = ["REZERVA" if (v, k) in reserve_map else ""
+                              for v, k in zip(df_conn["vykres"], df_conn["kabel"])]
 
     # Razitko / hlavicky
     df_hdr = df_all[df_all["vrstva"] == "T_RAM"].dropna(axis=1, how="all")
