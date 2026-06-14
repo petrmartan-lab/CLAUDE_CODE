@@ -6,6 +6,7 @@ __pycache__/
 report*.xlsx
 export_full.xlsx
 export_csv/
+porovnani.xlsx
 
 # Generované renderry (PNG z render skriptů)
 *_KRIZKY.png

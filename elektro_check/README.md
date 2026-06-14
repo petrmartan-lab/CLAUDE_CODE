@@ -91,6 +91,27 @@ k nejbližšímu kabelu. V exportu:
 
 Toto je spolehlivější než počítat křížky — vychází z explicitního údaje projektanta.
 
+## Porovnání se zadáním (`Input.xlsx`)
+
+`compare_input.py` porovná data z DWG (`export_full.xlsx`) se zadáním (`Input.xlsx`,
+list `FO` — viz struktura níže). Spuštění:
+```
+py compare_input.py "<složka s Input.xlsx a export_full.xlsx>"
+```
+Výstup `porovnani.xlsx` (listy: Detail, Jen_v_zadani, Jen_v_DWG, Porty_chybi, OR_nesedi).
+
+Kontroly:
+- **Rušení**: kabel zrušený v zadání (vlákna červeně) ↔ kabel `REZERVA` v DWG
+- **FROM/TO**: nové `Cab From/To` vs DWG `ODKUD/KAM` — rozliší `DWG=NEW` (aktualizováno),
+  `DWG=OLD` (drží původní), nebo nesedí
+- **Inventura**: kabely jen v zadání / jen v DWG
+- **Porty**: HUB porty z `Connect From/To` existují v DWG zařízeních
+- **Kabel→OR**: přiřazení OR z listu `FO in OR` vs DWG `ODKUD/KAM`
+
+`Input.xlsx` list `FO`: sloupce **A–O = původní** (červená výplň = rušený), **S–Z = nové
+údaje** u kabelů co zůstávají. Každý kabel má řádky po vláknech (X1/X2). Barvu výplně
+čte jen openpyxl. Plnou legendu ostatních listů zná projektant.
+
 ## Mapování dat (zjištěno z DWG)
 
 | Prvek | Vrstva | Blok | Klíčové atributy |
