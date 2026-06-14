@@ -40,6 +40,19 @@ def norm(s):
     return s
 
 
+def list_from_filename(name):
+    """'2+t544-25ro-1z011+17+bd3+03+c.dwg' -> '17' (cislo mezi 2. a 3. '+')."""
+    parts = str(name).split("+")
+    return parts[2].strip() if len(parts) > 2 else ""
+
+
+def _list_sortkey(x):
+    try:
+        return (0, int(x))
+    except ValueError:
+        return (1, x)
+
+
 def is_red(cell):
     f = cell.fill
     return f.patternType == "solid" and f.fgColor.rgb == RED
@@ -74,20 +87,27 @@ def read_spec(path):
 
 
 def read_dwg(path):
-    """cable -> {odkud, kam, reserve}"""
+    """cable -> {odkud, kam, reserve, listy}"""
     p = pd.read_excel(path, sheet_name="Propojeni", dtype=str).fillna("")
     dwg = {}
     for _, row in p.iterrows():
         c = norm(row.get("kabel"))
         if not c:
             continue
-        e = dwg.setdefault(c, {"odkud": "", "kam": "", "reserve": False})
+        e = dwg.setdefault(c, {"odkud": "", "kam": "", "reserve": False, "listy": set()})
         if not e["odkud"]:
             e["odkud"] = norm(row.get("odkud_FROM"))
             e["kam"] = norm(row.get("kam_TO"))
         if norm(row.get("rezerva")) == "REZERVA":
             e["reserve"] = True
+        lst = list_from_filename(row.get("vykres", ""))
+        if lst:
+            e["listy"].add(lst)
     return dwg
+
+
+def listy_str(d):
+    return ", ".join(sorted(d.get("listy", set()), key=_list_sortkey))
 
 
 def norm_port(s):
@@ -166,6 +186,7 @@ def run(folder):
                 ft = "NESEDI"; ft_bad += 1
         rows.append({
             "kabel": c,
+            "list": listy_str(d),
             "zadani_ruseny": "ANO" if s["cancelled"] else "",
             "DWG_rezerva": "ANO" if d["reserve"] else "",
             "ruseni_shoda": "OK" if ruseni_match else "!!! NESEDI",
@@ -205,7 +226,9 @@ def run(folder):
     with pd.ExcelWriter(out, engine="openpyxl") as w:
         df.to_excel(w, sheet_name="Detail", index=False)
         pd.DataFrame({"kabel_jen_v_zadani": only_spec}).to_excel(w, sheet_name="Jen_v_zadani", index=False)
-        pd.DataFrame({"kabel_jen_v_DWG": only_dwg}).to_excel(w, sheet_name="Jen_v_DWG", index=False)
+        pd.DataFrame([{"kabel_jen_v_DWG": c, "list": listy_str(dwg[c])} for c in only_dwg]
+                     or [{"kabel_jen_v_DWG": "", "list": ""}]).to_excel(
+            w, sheet_name="Jen_v_DWG", index=False)
         pd.DataFrame({"port_v_zadani_chybi_v_DWG": ports_missing}).to_excel(
             w, sheet_name="Porty_chybi", index=False)
         pd.DataFrame(or_rows if or_rows else [{"kabel": "", "zadani_OR": "", "DWG_ODKUD": "", "DWG_KAM": ""}]).to_excel(
